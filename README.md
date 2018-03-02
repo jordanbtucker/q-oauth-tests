@@ -1,2 +1,4 @@
 # q-oauth-tests
-Starting point for Node.js projects with Babel
+
+Q REST API OAuth 2.0 compliance tests
+
