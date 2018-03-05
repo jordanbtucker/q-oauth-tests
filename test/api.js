@@ -7,10 +7,33 @@ import supertest from 'supertest'
 describe(`Q REST API`, () => {
 	describe(`Token endpoint`, () => {
 		describe(`client_credentials grant type`, () => {
-			it(`must support HTTP Basic authentication`, useClientCredentials)
-			it(`must support x-www-form-urlencoded bodies`, useClientCredentials)
+			it(`must support HTTP Basic authentication`, async () => {
+				return supertest(process.env.TOKEN_ENDPOINT)
+					.post('/')
+					.auth(process.env.CLIENT_ID, process.env.CLIENT_SECRET)
+					.type('form')
+					.accept('json')
+					.send({grant_type: 'client_credentials'})
+					.expect(200)
+					.expect('Content-Type', /json/)
+					.expect(res => {
+						assert('access_token' in res.body, `Expected 'access_token' field in response body`)
+					})
+			})
 
-			it(`must return an invalid_client when given invalid client credentials`, async () => {
+			it(`must support x-www-form-urlencoded bodies`, async () => {
+				return supertest(process.env.TOKEN_ENDPOINT)
+					.post('/')
+					.auth(process.env.CLIENT_ID, process.env.CLIENT_SECRET)
+					.type('form')
+					.accept('json')
+					.send({grant_type: 'client_credentials'})
+					.expect(res => {
+						assert.notStrictEqual(res.status, 415, `Got HTTP status 415 Unsuported Media Type`)
+					})
+			})
+
+			it(`must return an HTTP 400 or 401 response with an invalid_client error when given invalid client credentials`, async () => {
 				return supertest(process.env.TOKEN_ENDPOINT)
 					.post('/')
 					.auth(process.env.CLIENT_ID, process.env.INVALID_CLIENT_SECRET)
@@ -20,7 +43,8 @@ describe(`Q REST API`, () => {
 					.expect('Content-Type', /json/)
 					.expect(res => {
 						assert(res.status === 400 || res.status === 401, `Expected HTTP status 400 or 401, got ${res.status}`)
-						assertValidError(res.body.error, 'invalid_client')
+						assert('error' in res.body, `Expected 'error' field in response body`)
+						assert.strictEqual(res.body.error, 'invalid_client', `Expected error to be invalid_client, got ${res.body.error}`)
 					})
 			})
 		})
@@ -39,14 +63,12 @@ describe(`Q REST API`, () => {
 						redirect_uri: process.env.REDIRECT_URI,
 						code,
 					})
-					.expect(200)
-					.expect('Content-Type', /json/)
 					.expect(res => {
-						assert('access_token' in res.body)
+						assert.notStrictEqual(res.status, 415, `Got HTTP status 415 Unsuported Media Type`)
 					})
 			})
 
-			it(`must require a redirect_uri`, async () => {
+			it(`must return an HTTP 400 response with an invalid_request error when not given a redirect_uri paramter`, async () => {
 				const code = await getAuthorizationCode()
 
 				return supertest(process.env.TOKEN_ENDPOINT)
@@ -62,11 +84,12 @@ describe(`Q REST API`, () => {
 					.expect(400)
 					.expect('Content-Type', /json/)
 					.expect(res => {
-						assertValidError(res.body.error, 'invalid_request')
+						assert('error' in res.body, `Expected 'error' field in response body`)
+						assert.strictEqual(res.body.error, 'invalid_request', `Expected error to be invalid_request, got ${res.body.error}`)
 					})
 			})
 
-			it(`must return an invalid_grant error when given an invalid code`, async () => {
+			it(`must return an HTTP 400 response with an invalid_grant error when given an invalid code`, async () => {
 				return supertest(process.env.TOKEN_ENDPOINT)
 					.post('/')
 					.type('form')
@@ -80,16 +103,46 @@ describe(`Q REST API`, () => {
 					.expect(400)
 					.expect('Content-Type', /json/)
 					.expect(res => {
-						assertValidError(res.body.error, 'invalid_grant')
+						assert('error' in res.body, `Expected 'error' field in response body`)
+						assert.strictEqual(res.body.error, 'invalid_grant', `Expected error to be invalid_grant, got ${res.body.error}`)
 					})
 			})
 		})
 
 		describe(`password grant type`, () => {
-			it(`must support x-www-form-urlencoded bodies`, usePassword)
-			it(`must support a username parameter`, usePassword)
+			it(`must support x-www-form-urlencoded bodies`, async () => {
+				return supertest(process.env.TOKEN_ENDPOINT)
+					.post('/')
+					.type('form')
+					.accept('json')
+					.send({
+						grant_type: 'password',
+						username: process.env.USER_USERNAME,
+						password: process.env.USER_PASSWORD,
+					})
+					.expect(res => {
+						assert.notStrictEqual(res.status, 415, `Got HTTP status 415 Unsuported Media Type`)
+					})
+			})
 
-			it(`must return an invalid_grant error when given invalid user credentials`, async () => {
+			it(`must support a username parameter`, async () => {
+				return supertest(process.env.TOKEN_ENDPOINT)
+					.post('/')
+					.type('form')
+					.accept('json')
+					.send({
+						grant_type: 'password',
+						username: process.env.USER_USERNAME,
+						password: process.env.USER_PASSWORD,
+					})
+					.expect(200)
+					.expect('Content-Type', /json/)
+					.expect(res => {
+						assert('access_token' in res.body, `Expected 'access_token' field in response body`)
+					})
+			})
+
+			it(`must return an HTTP 400 response with an invalid_grant error when given invalid user credentials`, async () => {
 				return supertest(process.env.TOKEN_ENDPOINT)
 					.post('/')
 					.type('form')
@@ -102,7 +155,8 @@ describe(`Q REST API`, () => {
 					.expect(400)
 					.expect('Content-Type', /json/)
 					.expect(res => {
-						assertValidError(res.body.error, 'invalid_grant')
+						assert('error' in res.body, `Expected 'error' field in response body`)
+						assert.strictEqual(res.body.error, 'invalid_grant', `Expected error to be invalid_grant, got ${res.body.error}`)
 					})
 			})
 		})
@@ -118,14 +172,12 @@ describe(`Q REST API`, () => {
 						client_id: process.env.CLIENT_ID,
 						refresh_token: process.env.REFRESH_TOKEN,
 					})
-					.expect(200)
-					.expect('Content-Type', /json/)
 					.expect(res => {
-						assert('access_token' in res.body)
+						assert.notStrictEqual(res.status, 415, `Got HTTP status 415 Unsuported Media Type`)
 					})
 			})
 
-			it(`must return an invalid_grant error when given an invalid refresh_token`, async () => {
+			it(`must return an HTTP 400 response with an invalid_grant error when given an invalid refresh_token`, async () => {
 				return supertest(process.env.TOKEN_ENDPOINT)
 					.post('/')
 					.type('form')
@@ -138,14 +190,15 @@ describe(`Q REST API`, () => {
 					.expect(400)
 					.expect('Content-Type', /json/)
 					.expect(res => {
-						assertValidError(res.body.error, 'invalid_grant')
+						assert('error' in res.body, `Expected 'error' field in response body`)
+						assert.strictEqual(res.body.error, 'invalid_grant', `Expected error to be invalid_grant, got ${res.body.error}`)
 					})
 			})
 		})
 	})
 
 	describe(`Authorization endpoint`, () => {
-		it(`must require a reponse_type parameter`, async () => {
+		it(`must return an HTTP 400 response with an invalid_request error when not given a response_type paramter`, async () => {
 			return supertest(process.env.AUTHORIZATION_ENDPOINT)
 				.get('/')
 				.query({
@@ -154,42 +207,12 @@ describe(`Q REST API`, () => {
 				})
 				.expect(400)
 				.expect(res => {
-					assertValidError(res.body, 'invalid_request')
+					assert('error' in res.body, `Expected 'error' field in response body`)
+					assert.strictEqual(res.body.error, 'invalid_request', `Expected error to be invalid_request, got ${res.body.error}`)
 				})
 		})
 	})
 })
-
-async function useClientCredentials () {
-	return supertest(process.env.TOKEN_ENDPOINT)
-		.post('/')
-		.auth(process.env.CLIENT_ID, process.env.CLIENT_SECRET)
-		.type('form')
-		.accept('json')
-		.send({grant_type: 'client_credentials'})
-		.expect(200)
-		.expect('Content-Type', /json/)
-		.expect(res => {
-			assert('access_token' in res.body)
-		})
-}
-
-async function usePassword () {
-	return supertest(process.env.TOKEN_ENDPOINT)
-		.post('/')
-		.type('form')
-		.accept('json')
-		.send({
-			grant_type: 'password',
-			username: process.env.USER_USERNAME,
-			password: process.env.USER_PASSWORD,
-		})
-		.expect(200)
-		.expect('Content-Type', /json/)
-		.expect(res => {
-			assert('access_token' in res.body)
-		})
-}
 
 async function getAuthorizationCode () {
 	let code
@@ -215,22 +238,4 @@ async function getAuthorizationCode () {
 	}
 
 	return code
-}
-
-function assertValidError (actualError, expectedError) {
-	if (expectedError != null) {
-		assert.strictEqual(actualError, expectedError)
-	}
-
-	switch (actualError) {
-	case 'invalid_request':
-	case 'invalid_client':
-	case 'invalid_grant':
-	case 'unauthorized_client':
-	case 'unsupported_grant_type':
-	case 'invalid_scope':
-		break
-	default:
-		assert.fail('Unknown error')
-	}
 }
