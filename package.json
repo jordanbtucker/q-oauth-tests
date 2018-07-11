@@ -1,6 +1,6 @@
 {
   "name": "q-oauth-tests",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "Q REST API OAuth 2.0 compliance tests",
   "main": "lib/index.js",
   "files": [
