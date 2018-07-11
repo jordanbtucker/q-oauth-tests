@@ -1,17 +1,17 @@
 {
   "name": "q-oauth-tests",
   "version": "0.0.0",
-  "description": "Starting point for Node.js projects with Babel",
+  "description": "Q REST API OAuth 2.0 compliance tests",
   "main": "lib/index.js",
   "files": [
     "lib/"
   ],
   "engines": {
-    "node": ">=6.0.0"
+    "node": ">=8.0.0"
   },
   "scripts": {
     "lint": "eslint --fix .",
-    "test": "cross-env NODE_ENV=test mocha --recursive --require babel-polyfill --compilers js:babel-register"
+    "test": "npm run lint && tap test -Rspec"
   },
   "repository": {
     "type": "git",
@@ -24,23 +24,20 @@
   },
   "homepage": "https://github.com/jordanbtucker/q-oauth-tests#readme",
   "dependencies": {
-    "babel-polyfill": "^6.26.0",
-    "dotenv": "^4.0.0"
+    "dotenv": "^6.0.0"
   },
   "devDependencies": {
-    "babel-preset-env": "^1.6.0",
-    "babel-register": "^6.26.0",
-    "cross-env": "^5.0.5",
-    "eslint": "^4.7.2",
-    "eslint-config-standard": "^10.2.1",
-    "eslint-plugin-import": "^2.7.0",
-    "eslint-plugin-node": "^5.1.1",
-    "eslint-plugin-promise": "^3.5.0",
-    "eslint-plugin-standard": "^3.0.1",
-    "mocha": "^3.5.3",
-    "request": "^2.83.0",
+    "cross-env": "^5.2.0",
+    "eslint": "^5.1.0",
+    "eslint-config-standard": "^11.0.0",
+    "eslint-plugin-import": "^2.13.0",
+    "eslint-plugin-node": "^6.0.1",
+    "eslint-plugin-promise": "^3.8.0",
+    "eslint-plugin-standard": "^3.1.0",
+    "request": "^2.87.0",
     "request-promise-native": "^1.0.5",
-    "superagent": "^3.8.2",
-    "supertest": "^3.0.0"
+    "superagent": "^3.8.3",
+    "supertest": "^3.1.0",
+    "tap": "^12.0.1"
   }
 }

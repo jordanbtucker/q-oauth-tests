@@ -1,8 +1,10 @@
-import 'dotenv/config'
-import assert from 'assert'
-import url from 'url'
-import request from 'request-promise-native'
-import supertest from 'supertest'
+require('dotenv/config')
+const assert = require('assert')
+const url = require('url')
+const request = require('request-promise-native')
+const supertest = require('supertest')
+
+require('tap').mochaGlobals()
 
 describe(`Q REST API`, () => {
 	describe(`Token endpoint`, () => {
